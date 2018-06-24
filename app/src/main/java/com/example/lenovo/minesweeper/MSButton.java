@@ -5,18 +5,42 @@ import android.support.v7.widget.AppCompatButton;
 
 public class MSButton extends AppCompatButton{
 
-    private int value;
+    private int r, c;
+    boolean isFlag = false; ////declared default coz MainActivity mei use krna hai
+                            //// isliye private nhi kr skte!
+    private int value = 0; // set default for same reasons as above
+    boolean isRevealed = false;
+
     public MSButton(Context context) {
         super(context);
     }
 
-    public void setValue(int value){
-        this.value = value;
+    public void setRowCoord(int r){
+        this.r = r;
     }
 
-    public int getValue() {
-        return this.value;
+    public void setColCoord(int c){
+        this.c = c;
     }
+
+    public int getRowCoord(){
+        return this.r;
+    }
+
+    public int getColCoord(){
+        return this.c;
+    }
+
+    public void setValue(int additionInValue){
+        this.value += additionInValue;
+    }
+
+    public int getValue() { return this.value; }
+
+    public boolean isFlagged() { return isFlag; }
+
+
+
     /*
     VALUE?
     BOMB?
