@@ -1,5 +1,8 @@
 package com.example.lenovo.minesweeper;
 
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.DrawableRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,7 +18,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     LinearLayout rootLayout;
 
-    public int size = 4;
+    public int size = 9;
 
     public ArrayList<LinearLayout> rows;
     public MSButton [][] board;
@@ -26,7 +29,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     public int currentStatus;
 
     public static final int MINE = -1;
-//    public static final int ;
+
+    int checkFirstClick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -37,13 +41,17 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         setupBoard();
 
-        setMines();
+        checkFirstClick = 0;
 
-        setNeighbors();
+//        setMines();
+        //this is now called in onClick, after first click
+
+//        setNeighbors();
+        //this is now called in setMines, after all mines are set
     }
 
     public void setupBoard(){
-
+        currentStatus = INCOMPLETE;
         rows = new ArrayList<>();
         board = new MSButton[size][size];
 
@@ -80,7 +88,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     }
 
     private void setMines() {
-        int count = 2*size;
+
+        int count = 10;
         while (count > 0){
             Random random = new Random();
             int i = random.nextInt(size);
@@ -90,11 +99,14 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
             //set mine on (i, j)
             MSButton button = board[i][j];
-            button.setValue(MINE);
-//          button.setText("-1");
 
-            count--;
+            if (button.getValue() != MINE && !(button.NbrToFirst)) {
+                button.setValue(MINE);
+                count--;
+            }
         }
+
+        setNeighbors();
     }
     //all mines have been set now
 
@@ -106,7 +118,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             for (int j = 0; j < size; j++){
                 MSButton button = board[i][j];
                 if (button.getValue() == MINE){
-                    //we ll check neighbors
+                    //Now check neighbors
 
                     int [] x = {-1, -1, -1, 0, 0, 1, 1, 1};
                     int [] y = {-1, 0, 1, -1, 1, -1, 0 ,1};
@@ -135,7 +147,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         }
     }
             /*
-            YAHAN TAK SABBB SAHIII!
+            the board   the mines   the neighboring cell values
+            ALL have been set so far
              */
 
 
@@ -166,39 +179,102 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     //HANDLE onClick
     @Override
     public void onClick(View view) {
+        MSButton button = (MSButton) view;
 
-        if (currentStatus == INCOMPLETE){
 
-            MSButton button = (MSButton) view;
 
-            checkGameStatus(button);
+         {
+            if (currentStatus == INCOMPLETE) {
+
+                if (checkFirstClick == 0) {
+                    setZeroOnFirstClick(button);
+
+                    checkFirstClick++;
+                    //NOW set mines
+                    setMines();
+                    displayValuesOnClick(button);
+                } else {
+                    displayValuesOnClick(button);
+                }
+            }
+        }
+
+        //first check if game is over and won
+        boolean check = checkGameCompleteWon(button);
+
+        if (check){
+            currentStatus = COMPLETE_WON;
+            Toast.makeText(this, "Congrats! You win", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void checkGameStatus(MSButton button) {
-        if (!(button.isFlagged()) && !(button.isRevealed))
+    private boolean checkGameCompleteWon(MSButton button) {
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size;j ++){
+                button = board[i][j];
+                if (button.getValue() != MINE && !(button.isRevealed)){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }
+
+    private void setZeroOnFirstClick(MSButton button) {
+        //catch co-ordinates of current button
+        int rowCoord = button.getRowCoord();
+        int colCoord = button.getColCoord();
+
+        int [] x = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int [] y = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        for (int k = 0; k < 8; k++) {
+
+            int I = rowCoord + x[k];
+            int J = colCoord + y[k];
+
+            //check border conditions
+            if (I >= 0 && I < size && J >= 0 && J < size) {
+                MSButton newButton = board[I][J];
+                newButton.NbrToFirst = true;
+            }
+        }
+    }
+
+    private void displayValuesOnClick(MSButton button) {
+
+        if (button.isFlagged()){
+            Toast.makeText(this, "Press longer to remove flag", Toast.LENGTH_SHORT).show();
+        }
+
+
+        // NOW the MAIN LOGIC
+        else if (!(button.isFlagged()) && !(button.isRevealed))
         {
             if (button.getValue() == MINE) {
                 button.isRevealed = true;
                 displayAllMines();
-                Toast.makeText(this, "Game Over!", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Game Over :( \nTry next time ", Toast.LENGTH_LONG).show();
                 currentStatus = COMPLETE_LOST;
             }
 
             else if (button.getValue() > 0){
                 button.setText(button.getValue() + "");
                 button.isRevealed = true;
+                button.setEnabled(false);
             }
 
             else if (button.getValue() == 0){
                 button.setText(".");
                 button.isRevealed = true;
+                button.setEnabled(false);
 
-                //catch coords of current button
+                //catch co-ordinates of current button
                 int rowCoord = button.getRowCoord();
                 int colCoord = button.getColCoord();
 
-//                board[rowCoord][colCoord] = button;
 
                 int [] x = {-1, -1, -1, 0, 0, 1, 1, 1};
                 int [] y = {-1, 0, 1, -1, 1, -1, 0, 1};
@@ -210,18 +286,19 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
                     //check border conditions
                     if (I >= 0 && I < size && J>=0 && J < size) {
-                        // now check  (new i, new j) has what value
 
+                        // now check  (new i, new j) has what value
                         MSButton newButton = board[I][J];
 
                         if (newButton.getValue() == MINE){
                             //do nothing
-                            ///let it stay shut
+                            //let it stay shut
                         }
 
                         else if (newButton.getValue() >= 0){
 
-                            checkGameStatus(newButton);
+                            displayValuesOnClick(newButton);
+                            //Recursive Call!
                         }
                     }
                 }
@@ -237,7 +314,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 button = board[i][j];
                 if (button.getValue() == MINE) {
                     button.isRevealed = true;
-                    button.setText("M");
+                    button.setText("");
+                    button.setBackgroundResource(R.drawable.mine);
                 }
             }
         }

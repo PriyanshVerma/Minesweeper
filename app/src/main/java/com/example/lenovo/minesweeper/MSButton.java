@@ -5,6 +5,7 @@ import android.support.v7.widget.AppCompatButton;
 
 public class MSButton extends AppCompatButton{
 
+    boolean NbrToFirst = false;
     private int r, c;
     boolean isFlag = false; ////declared default coz MainActivity mei use krna hai
                             //// isliye private nhi kr skte!
