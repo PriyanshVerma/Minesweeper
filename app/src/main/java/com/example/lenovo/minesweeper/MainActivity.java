@@ -1,13 +1,12 @@
 package com.example.lenovo.minesweeper;
 
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.support.annotation.DrawableRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -19,6 +18,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     LinearLayout rootLayout;
 
     public int size = 9;
+    public int noOfMines = 10;
 
     public ArrayList<LinearLayout> rows;
     public MSButton [][] board;
@@ -49,6 +49,35 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 //        setNeighbors();
         //this is now called in setMines, after all mines are set
     }
+
+    /* MENU OPTIONS-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.main_menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.resetItem){
+            setupBoard();
+        }
+        else if (id == R.id.easy){
+            size = 9;
+            noOfMines = 10;
+            setupBoard();
+        }
+        else if (id == R.id.difficult){
+            size = 16;
+            noOfMines = 40;
+            setupBoard();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    */
 
     public void setupBoard(){
         currentStatus = INCOMPLETE;
@@ -83,14 +112,16 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
                 button.setRowCoord(i);
                 button.setColCoord(j);
+
+                button.setBackgroundResource(R.drawable.blackbordered);
             }
         }
     }
 
     private void setMines() {
 
-        int count = 10;
-        while (count > 0){
+        noOfMines = 10;
+        while (noOfMines > 0){
             Random random = new Random();
             int i = random.nextInt(size);
 
@@ -102,7 +133,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
             if (button.getValue() != MINE && !(button.NbrToFirst)) {
                 button.setValue(MINE);
-                count--;
+                noOfMines--;
             }
         }
 
@@ -163,12 +194,16 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             if (button.isFlagged()) {
                 button.isFlag = false;
                 button.setText("");
+                button.setBackgroundResource(R.drawable.blackbordered);
 
             }
 
             else {//button.isFlagged() = false
                 button.isFlag = true;
-                button.setText("F");
+                //button.setText("F");
+                //button.setTextColor(getApplication().getResources().getColor(R.color.red));
+                //button.setTextSize(50);
+                button.setBackgroundResource(R.drawable.flag);
             }
         }
 
@@ -181,45 +216,42 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
     public void onClick(View view) {
         MSButton button = (MSButton) view;
 
+        if (currentStatus == INCOMPLETE) {
 
+            if (checkFirstClick == 0) {
 
-         {
-            if (currentStatus == INCOMPLETE) {
+                setZeroOnFirstClick(button);
 
-                if (checkFirstClick == 0) {
-                    setZeroOnFirstClick(button);
+                checkFirstClick++;
+                //NOW set mines
+                setMines();
+                revealValuesOnClick(button);
+            }
 
-                    checkFirstClick++;
-                    //NOW set mines
-                    setMines();
-                    displayValuesOnClick(button);
-                } else {
-                    displayValuesOnClick(button);
-                }
+            else {
+                revealValuesOnClick(button);
             }
         }
 
         //first check if game is over and won
-        boolean check = checkGameCompleteWon(button);
+        boolean check = checkGameCompleteWon();
 
         if (check){
             currentStatus = COMPLETE_WON;
-            Toast.makeText(this, "Congrats! You win", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Congrats!\n  You win", Toast.LENGTH_LONG).show();
         }
     }
 
-    private boolean checkGameCompleteWon(MSButton button) {
+    private boolean checkGameCompleteWon() {
         for (int i = 0; i < size; i++){
             for (int j = 0; j < size;j ++){
-                button = board[i][j];
+                MSButton button = board[i][j];
                 if (button.getValue() != MINE && !(button.isRevealed)){
                     return false;
                 }
             }
         }
-
-        return true;
-
+      return true;
     }
 
     private void setZeroOnFirstClick(MSButton button) {
@@ -227,10 +259,11 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         int rowCoord = button.getRowCoord();
         int colCoord = button.getColCoord();
 
-        int [] x = {-1, -1, -1, 0, 0, 1, 1, 1};
-        int [] y = {-1, 0, 1, -1, 1, -1, 0, 1};
+        int [] x = {-1, -1, -1, 0, 0, 1, 1, 1, 0};
+        int [] y = {-1, 0, 1, -1, 1, -1, 0, 1, 0};  //(0,0) handles corrdinates of first click btn.
+                                                    //It also shudnt have a mine!
 
-        for (int k = 0; k < 8; k++) {
+        for (int k = 0; k < 9; k++) {
 
             int I = rowCoord + x[k];
             int J = colCoord + y[k];
@@ -243,7 +276,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         }
     }
 
-    private void displayValuesOnClick(MSButton button) {
+    private void revealValuesOnClick(MSButton button) {
 
         if (button.isFlagged()){
             Toast.makeText(this, "Press longer to remove flag", Toast.LENGTH_SHORT).show();
@@ -256,18 +289,21 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             if (button.getValue() == MINE) {
                 button.isRevealed = true;
                 displayAllMines();
-                Toast.makeText(this, "Game Over :( \nTry next time ", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "GAME OVER! \nTry next time ", Toast.LENGTH_LONG).show();
                 currentStatus = COMPLETE_LOST;
             }
 
             else if (button.getValue() > 0){
                 button.setText(button.getValue() + "");
+                button.setTextSize(30);
+                button.setBackgroundResource(R.drawable.white2);
                 button.isRevealed = true;
                 button.setEnabled(false);
             }
 
             else if (button.getValue() == 0){
-                button.setText(".");
+                button.setText("");
+                button.setBackgroundResource(R.drawable.white2);
                 button.isRevealed = true;
                 button.setEnabled(false);
 
@@ -297,7 +333,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
                         else if (newButton.getValue() >= 0){
 
-                            displayValuesOnClick(newButton);
+                            revealValuesOnClick(newButton);
                             //Recursive Call!
                         }
                     }
@@ -315,7 +351,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                 if (button.getValue() == MINE) {
                     button.isRevealed = true;
                     button.setText("");
-                    button.setBackgroundResource(R.drawable.mine);
+                    button.setBackgroundResource(R.drawable.mine2);
                 }
             }
         }

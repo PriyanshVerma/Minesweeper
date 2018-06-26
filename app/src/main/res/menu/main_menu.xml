@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Reset"
+        android:id="@+id/resetItem"/>
+
+    <item android:title="Select Size"
+        android:id="@+id/selectSize">
+        <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+            <item android:title="Easy"
+                android:id="@+id/easy"/>
+            <item android:title="Difficult"
+                android:id="@+id/difficult"/>
+
+        </menu>
+
+    </item>
+</menu>
